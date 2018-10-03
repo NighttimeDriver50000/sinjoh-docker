@@ -1,0 +1,41 @@
+FROM fedora:latest
+RUN useradd -m ${USER}
+WORKDIR /home/${USER}
+RUN mkdir /run/user/1000
+ENV XDG_RUNTIME_DIR /run/user/1000
+# Haxe
+RUN dnf -y install haxe
+RUN dnf -y install sudo
+RUN echo '${USER} ALL=(ALL) NOPASSWD:ALL' >>/etc/sudoers
+RUN sudo -u ${USER} mkdir haxelib
+RUN echo 'sudo -u ${USER} haxelib --always "$@"' >.haxelib.sh
+RUN chmod 744 .haxelib.sh
+RUN ./.haxelib.sh setup haxelib
+# HaxeFlixel
+RUN ./.haxelib.sh install lime
+RUN ./.haxelib.sh install openfl
+RUN ./.haxelib.sh install flixel
+RUN ./.haxelib.sh run lime setup flixel
+RUN yes | ./.haxelib.sh run lime setup
+RUN ./.haxelib.sh install flixel-tools
+RUN printf 'y\n3\ny\n' | ./.haxelib.sh run flixel-tools setup
+RUN ./.haxelib.sh update
+# Visual Studio Code
+RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc
+RUN mkdir -p /etc/yum.repos.d
+ADD vscode.repo /etc/yum.repos.d
+RUN dnf -y upgrade
+RUN dnf -y install code
+RUN dnf -y install which libX11-xcb libglvnd-glx
+# Systemd
+RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done); \
+rm -f /lib/systemd/system/multi-user.target.wants/*;\
+rm -f /etc/systemd/system/*.wants/*;\
+rm -f /lib/systemd/system/local-fs.target.wants/*; \
+rm -f /lib/systemd/system/sockets.target.wants/*udev*; \
+rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
+rm -f /lib/systemd/system/basic.target.wants/*;\
+rm -f /lib/systemd/system/anaconda.target.wants/*;
+RUN rm -rf /run
+# Entrypoint should be /sbin/init, but run-image --systemd handles that
+ENTRYPOINT [ "/bin/sh" ]

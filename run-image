@@ -1,0 +1,50 @@
+#!/bin/bash
+image="$1"
+shift
+project_dir="$(readlink -e "$(dirname "$0")/..")"
+systemd=
+user="$USER"
+args=()
+end_args=()
+next_arg_docker=
+while [ "$1" ]; do
+    if [ "$next_arg_docker" ]; then
+        args+=("$1")
+        next_arg_docker=
+    elif [ "$1" = '--docker-arg' ]; then
+        next_arg_docker=1
+    elif [ "$1" = '--systemd' ]; then
+        systemd=1
+        user=root
+        args+=('-d=true')
+        args+=('--entrypoint' '/sbin/init')
+        args+=('--cap-add=SYS_ADMIN')
+        args+=('-e' 'container=docker')
+        args+=('-v' '/sys/fs/cgroup:/sys/fs/cgroup:ro')
+        args+=('--tmpfs' '/run')
+    else
+        end_args+=("$1")
+    fi
+    shift
+done
+create_container () {
+    docker run "${args[@]}" --rm \
+        -e DISPLAY="$DISPLAY" -u "$user" \
+        -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
+        -v "$project_dir:/home/$USER/project" \
+        "$image" "$@"
+}
+if [ "$systemd" ]; then
+    uuid="$(create_container)"
+    args=()
+    [ -t 0 ] && args+=('-i')
+    [ -t 1 ] && args+=('-t')
+    docker exec "${args[@]}" \
+        -e DISPLAY="$DISPLAY" -u "$USER" \
+        "$uuid" "${end_args[@]}"
+    docker stop "$uuid"
+else
+    [ -t 0 ] && args+=('-i')
+    [ -t 1 ] && args+=('-t')
+    create_container "${end_args[@]}"
+fi

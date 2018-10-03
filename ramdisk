@@ -1,0 +1,54 @@
+#!/bin/bash
+volume_name="${USER}_ramdisk"
+size_blocks=2097152
+verbose=''
+
+function show_help {
+  echo "usage: ramdisk [ -h|? | -n|l <name> | -s <size in blocks>"
+  echo "                | -k <size in KB> | -m <size in MB>"
+  echo "                | -g <size in GB> ]*"
+}
+
+OPTIND=1
+while getopts "h?vn:l:s:k:m:g:" opt; do
+  case "$opt" in
+  h|\?)
+    show_help
+    exit 0
+    ;;
+  v)
+    verbose=v
+    ;;
+  n|l)
+    volume_name="$OPTARG"
+    ;;
+  s)
+    size_blocks="$OPTARG"
+    ;;
+  k)
+    size_blocks=$((OPTARG * 2))
+    ;;
+  m)
+    size_blocks=$((OPTARG * 2048))
+    ;;
+  g)
+    size_blocks=$((OPTARG * 2097152))
+    ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+
+[ "$1" = "--" ] && shift
+
+mountramdisk() {
+  sudo mkdir -p "$volume_name"
+  sudo chmod 777 "$volume_name"
+  sudo mount -t tmpfs -o nr_blocks="$size_blocks" tmpfs "$volume_name"
+}
+
+if [ "$verbose" ]; then
+  mountramdisk
+else
+  mountramdisk >/dev/null
+fi
