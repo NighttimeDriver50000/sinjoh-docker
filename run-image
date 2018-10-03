@@ -4,6 +4,7 @@ shift
 project_dir="$(readlink -e "$(dirname "$0")/..")"
 systemd=
 user="$USER"
+x11_target='/tmp/.X11-unix'
 args=()
 end_args=()
 next_arg_docker=
@@ -16,6 +17,7 @@ while [ "$1" ]; do
     elif [ "$1" = '--systemd' ]; then
         systemd=1
         user=root
+        x11_target='/X11-unix'
         args+=('-d=true')
         args+=('--entrypoint' '/sbin/init')
         args+=('--cap-add=SYS_ADMIN')
@@ -30,7 +32,7 @@ done
 create_container () {
     docker run "${args[@]}" --rm \
         -e DISPLAY="$DISPLAY" -u "$user" \
-        -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
+        -v "/tmp/.X11-unix:$x11_target:ro" \
         -v "$project_dir:/home/$USER/project" \
         "$image" "$@"
 }
@@ -39,6 +41,10 @@ if [ "$systemd" ]; then
     args=()
     [ -t 0 ] && args+=('-i')
     [ -t 1 ] && args+=('-t')
+    docker exec "$uuid" \
+        mount --bind "$x11_target" /tmp/.X11-unix
+    docker exec "$uuid" \
+        mkdir -p /run/user/1000
     docker exec "${args[@]}" \
         -e DISPLAY="$DISPLAY" -u "$USER" \
         "$uuid" "${end_args[@]}"
