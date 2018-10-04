@@ -27,6 +27,34 @@ ADD vscode.repo /etc/yum.repos.d
 RUN dnf -y upgrade
 RUN dnf -y install code
 RUN dnf -y install which libX11-xcb libglvnd-glx
+# Compile
+#RUN dnf -y install 'dnf-command(builddep)'
+##RUN dnf -y builddep code # Nope. Fucking Microsoft.
+#RUN dnf -y install npm python git libsecret-devel libX11-devel libxkbfile-devel alsa-lib gcc-c++
+#RUN sudo -u ${USER} git clone https://github.com/Microsoft/vscode.git
+#WORKDIR vscode
+#RUN sudo -u ${USER} git clone https://aur.archlinux.org/code-git.git
+#RUN dnf -y install patch
+#RUN sudo -u ${USER} patch -p1 -i code-git/product_json.patch
+#RUN sudo -u ${USER} sed -e "s/@COMMIT@/$(git rev-parse HEAD)/" -e "s/@DATE@/$(date -u -Is | sed 's/\+00:00/Z/')/" -i product.json
+#RUN sudo -u ${USER} patch -p1 -i code-git/code-liveshare.patch
+#ADD --chown=${USER}:${USER} info.sed .
+#RUN sudo -u ${USER} sed -f info.sed -i resources/linux/code.{appdata.xml,desktop}
+#RUN npm install -g gulp yarn
+#RUN sudo -u ${USER} yarn install
+#RUN sudo -u ${USER} /usr/bin/node --max_old_space_size=2048 /usr/bin/gulp vscode-linux-x64-min
+#RUN install -dm 755 /usr/lib/code-git
+#RUN cp -r --no-preserve=ownership --preserve=mode * /usr/lib/code-git
+#RUN install -Dm 755 code-git/code-git.js /usr/lib/code-git
+#RUN install -Dm 644 resources/linux/code.appdata.xml /usr/share/metainfo/code-git.appdata.xml
+#RUN install -Dm 644 resources/linux/code.desktop /usr/share/applications/code-git.desktop
+#RUN install -Dm 644 resources/linux/code.png /usr/share/pixmaps/code-git.png
+#RUN install -Dm 644 LICENSE.txt /usr/share/licenses/code-git/LICENSE
+#RUN install -Dm 644 ThirdPartyNotices.txt /usr/share/licenses/code-git/ThirdPartyNotices.txt
+#RUN sudo -u ${USER} npm install electron
+#RUN echo '/home/${USER}/vscode/node_modules/.bin/electron /usr/lib/code-git/out-vscode-min/cli.js /usr/lib/code-git/code-git.js "$@"' >/usr/bin/code-git.sh
+#WORKDIR /home/${USER}
+RUN dnf -y install findutils c-ares gtk3 http-parser libevent libvpx libxslt libXScrnSaver minizip nss re2 snappy
 # Systemd
 RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done); \
 rm -f /lib/systemd/system/multi-user.target.wants/*;\
