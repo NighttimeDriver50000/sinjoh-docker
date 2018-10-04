@@ -1,7 +1,0 @@
-FROM fedora:latest
-RUN useradd -m ${USER}
-WORKDIR /home/${USER}
-RUN mkdir /run/user/1000
-ENV XDG_RUNTIME_DIR /run/user/1000
-RUN dnf -y install tiled
-ENTRYPOINT tiled

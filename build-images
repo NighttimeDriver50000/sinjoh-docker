@@ -3,9 +3,7 @@ cd "$(dirname "$0")"
 script_dir="$(pwd)"
 build () {
     if cd "$script_dir/$2"; then
-        envsubst '${USER}' <Dockerfile.in >Dockerfile
         docker build --no-cache="$1" -t "$2" .
-        rm Dockerfile
     fi
 }
 if [ "$1" ]; then

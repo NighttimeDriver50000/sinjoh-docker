@@ -31,10 +31,11 @@ while [ "$1" ]; do
 done
 create_container () {
     docker run "${args[@]}" --rm \
-        -e DISPLAY="$DISPLAY" -u "$user" \
-        -v "/tmp/.X11-unix:$x11_target:ro" \
-        -v "$project_dir:/home/$USER/project" \
-        "$image" "$@"
+        -v "/tmp/.X11-unix:$x11_target" \
+        -e DISPLAY="unix$DISPLAY" --device /dev/dri \
+        --net host --hostname "$(hostname)" \
+        -e UID="$(id -u)" -e GID="$(id -g)" -e USERNAME="$(id -un)" \
+        -v "$project_dir:/project" "$image" "$@"
 }
 if [ "$systemd" ]; then
     uuid="$(create_container)"
